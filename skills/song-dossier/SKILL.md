@@ -4,11 +4,7 @@ description: >
   Concise dossier on a Grateful Dead song — origins, meaning, evolution,
   and a version worth hearing. Dense and curated, not padded.
 slash_command: "/song"
-triggers:
-  - "song dossier"
-  - "song brief"
-  - "tell me about the song"
-  - "song history"
+triggers: []
 max_tokens: 4096
 ---
 

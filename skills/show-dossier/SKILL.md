@@ -4,10 +4,7 @@ description: >
   Concise dossier on a Grateful Dead show — verified setlist, era context,
   highlights from community reviews, and where to listen.
 slash_command: "/show"
-triggers:
-  - "show dossier"
-  - "tell me about the show"
-  - "what happened at"
+triggers: []
 max_tokens: 4096
 ---
 

@@ -1,16 +1,10 @@
 ---
 name: heady-five
 description: >
-  Top 5 community-ranked versions of a Grateful Dead song from HeadyVersion.com.
-  Includes date, venue, why it's ranked, and curated fan commentary.
+  Top community-ranked versions of a Grateful Dead song from HeadyVersion.com.
+  Defaults to 5, but user can request any number (e.g., /heady 3 Dark Star).
 slash_command: "/heady"
-triggers:
-  - "heady five"
-  - "heady 5"
-  - "top versions"
-  - "top 5 versions"
-  - "top five versions"
-  - "best versions"
+triggers: []
 max_tokens: 4096
 ---
 
@@ -43,8 +37,9 @@ The user provides a song title. Confirm the song and proceed.
 
 ### Step 3: Generate Output
 
-Present the **top 5** versions using the format in FORMAT.md.
-After the top 5, add one **Honorable Mention** that just missed the cut.
+The user may specify a number (e.g., "/heady 3 Dark Star"). If they do,
+return that many versions. If no number is specified, default to 5.
+After the list, add one **Honorable Mention** that just missed the cut.
 
 ---
 

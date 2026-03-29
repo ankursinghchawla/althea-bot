@@ -4,9 +4,7 @@ description: >
   Open-ended research on Grateful Dead questions using a cascading hierarchy
   of authoritative sources. For questions that need more than casual knowledge.
 slash_command: "/research"
-triggers:
-  - "deep dive"
-  - "what do we know about"
+triggers: []
 max_tokens: 4096
 ---
 
