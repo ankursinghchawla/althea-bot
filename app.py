@@ -83,7 +83,7 @@ WEB_SEARCH_TOOL = {
     "max_uses": 5,
 }
 WEB_FETCH_TOOL = {
-    "type": "web_fetch_20250305",
+    "type": "web_fetch_20250910",
     "name": "web_fetch",
     "max_uses": 3,
 }
