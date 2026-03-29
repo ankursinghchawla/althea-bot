@@ -11,7 +11,7 @@ triggers:
   - "top 5 versions"
   - "top five versions"
   - "best versions"
-max_tokens: 2048
+max_tokens: 4096
 ---
 
 # Heady Five

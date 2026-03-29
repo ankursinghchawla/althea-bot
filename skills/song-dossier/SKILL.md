@@ -9,7 +9,7 @@ triggers:
   - "song brief"
   - "tell me about the song"
   - "song history"
-max_tokens: 2048
+max_tokens: 4096
 ---
 
 # Song Dossier

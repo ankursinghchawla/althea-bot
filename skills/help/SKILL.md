@@ -9,7 +9,7 @@ triggers:
   - "how do i use"
   - "your skills"
   - "your commands"
-max_tokens: 1024
+max_tokens: 4096
 ---
 
 # Help

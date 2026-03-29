@@ -8,7 +8,7 @@ triggers:
   - "show dossier"
   - "tell me about the show"
   - "what happened at"
-max_tokens: 2048
+max_tokens: 4096
 ---
 
 # Show Dossier

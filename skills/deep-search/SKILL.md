@@ -7,7 +7,7 @@ slash_command: "/research"
 triggers:
   - "deep dive"
   - "what do we know about"
-max_tokens: 2048
+max_tokens: 4096
 ---
 
 # Deep Search

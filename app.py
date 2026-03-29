@@ -206,10 +206,10 @@ def extract_response_text(response):
 def ask_althea(messages, skill=None):
     """Send messages to Claude with Althea's persona, web search, and optional skill."""
     system = ALTHEA_SYSTEM_PROMPT
-    max_tokens = 1024
+    max_tokens = 4096
     if skill:
         system += f"\n\n---\n\n## Active Skill: {skill['name']}\n\n{skill['instructions']}"
-        max_tokens = skill.get("max_tokens", 1024)
+        max_tokens = skill.get("max_tokens", 4096)
 
     response = claude.messages.create(
         model="claude-sonnet-4-20250514",
