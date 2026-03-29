@@ -252,8 +252,10 @@ def get_upcoming_shows_date_context():
 
 # Date patterns for post-processing filter
 _DATE_PATTERNS = [
-    # "March 28, 2026" or "March 28 2026"
-    re.compile(r"(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2}),?\s+(\d{4})", re.IGNORECASE),
+    # "March 28, 2026" or "March 28 2026" (with year)
+    re.compile(r"(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})", re.IGNORECASE),
+    # "March 28th" or "March 12" (no year — assume current year)
+    re.compile(r"(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2})(?:st|nd|rd|th)?(?!\s*\d)", re.IGNORECASE),
     # "3/28/2026" or "3/28/26"
     re.compile(r"(\d{1,2})/(\d{1,2})/(\d{2,4})"),
 ]
@@ -275,10 +277,16 @@ def _parse_date_from_match(match):
                 y += 2000
             return date(y, m, d)
         else:
-            # Named month format: Month D, Y
+            # Named month format
             m = _MONTH_MAP.get(groups[0].lower())
             if m:
-                return date(int(groups[2]), m, int(groups[1]))
+                day = int(groups[1])
+                if len(groups) >= 3 and groups[2]:
+                    # Has year
+                    return date(int(groups[2]), m, day)
+                else:
+                    # No year — assume current year
+                    return date(date.today().year, m, day)
     except (ValueError, KeyError):
         pass
     return None

@@ -1,17 +1,18 @@
 # Upcoming Shows Format
 
 Group by date, closest first. Each entry gets a 1-2 sentence description.
-No "check X for tickets" — just list the show. No tips footer.
+ALWAYS include the year in dates (e.g., "April 4, 2026" not "April 4th").
+No "check X for tickets." No tips footer. No prose paragraphs.
 
 ---
 
 ```
 *Upcoming Dead-related shows near [Region]*
 
-*[Date]* — *[Artist/Band]*
+*[Month Day, Year]* — *[Artist/Band]*
 [Venue], [City] — [1-2 sentence description: what kind of act, why worth checking out]
 
-*[Date]* — *[Artist/Band]*
+*[Month Day, Year]* — *[Artist/Band]*
 [Venue], [City] — [1-2 sentence description]
 
 ...
@@ -23,3 +24,6 @@ No "check X for tickets" — just list the show. No tips footer.
 
 Only include the "Regular weekly shows" section if you found real, verified
 recurring events. Do not invent them.
+
+Do NOT add any other sections (no "Notable Bands," no "Venues to Watch,"
+no commentary). Just the shows.
