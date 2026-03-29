@@ -38,11 +38,22 @@ Use `web_search` to find upcoming shows in the next 30 days. Search for:
 
 Search at least 2-3 sources to get a reasonable picture.
 
-### Step 3: Present Results
+### Step 3: Filter Results
 
-Use the format in FORMAT.md. Group by date, closest first.
-Only include events in the next 30 days.
-Skip straight to the output — no preamble.
+Before presenting results, apply these filters:
+
+- **Dates must be in the future.** Today's date is provided in your context.
+  Drop anything that has already happened.
+- **Location must be in or near the requested region.** "Near" means within
+  reasonable driving distance (~1-2 hours). A show in Dallas is NOT near LA.
+  If a notable tour is coming but not to the region, you can mention it in
+  one line at the end ("_JRAD is touring but no LA dates in the next 30 days_").
+- **Verify dates are real.** If you're not confident a date is accurate,
+  omit it rather than list a wrong date.
+
+### Step 4: Present Results
+
+Use the format in FORMAT.md. Skip straight to the output — no preamble.
 
 ---
 
@@ -67,5 +78,4 @@ Do NOT include acts with no Dead or jam connection.
 - Never invent show dates, venues, or lineups
 - If you can't find shows in a region, say so honestly — suggest checking
   jambase.com or bandsintown.com directly
-- Include ticket/info links when available
 - Note if a show's status is unconfirmed or part of a rumored tour
