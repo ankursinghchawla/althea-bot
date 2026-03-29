@@ -21,5 +21,5 @@ Hey! Here's what I can help with:
 - `/song [title]` — Song dossier: origins, meaning, evolution
 - `/show [date]` — Show dossier: setlist, context, highlights
 - `/deep-dive [question]` — Sourced research across Dead archives
-- `/shows [region]` — Upcoming Dead-related shows near you
+- `/upcoming-shows [region]` — Upcoming Dead-related shows near you
 - `/help` — This message

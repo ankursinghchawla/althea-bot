@@ -1,6 +1,7 @@
 import os
 import re
 import glob
+import time
 import logging
 
 import yaml
@@ -8,6 +9,7 @@ from slack_bolt import App
 from slack_bolt.adapter.flask import SlackRequestHandler
 from flask import Flask, request
 import anthropic
+from anthropic import RateLimitError
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -144,7 +146,8 @@ def match_skill(text):
       /heady tell me the top 3 dark stars
     """
     text_lower = text.lower().strip()
-    for skill in SKILLS:
+    # Sort by command length descending so "/shows" matches before "/show"
+    for skill in sorted(SKILLS, key=lambda s: len(s["slash_command"]), reverse=True):
         cmd = skill["slash_command"]
         if not cmd:
             continue
@@ -222,14 +225,24 @@ def ask_althea(messages, skill=None):
         system += f"\n\n---\n\n## Active Skill: {skill['name']}\n\n{skill['instructions']}"
         max_tokens = skill.get("max_tokens", 4096)
 
-    response = claude.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=max_tokens,
-        system=system,
-        messages=messages,
-        tools=TOOLS,
-    )
-    return extract_response_text(response)
+    # Retry up to 3 times on rate limit errors
+    for attempt in range(3):
+        try:
+            response = claude.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=max_tokens,
+                system=system,
+                messages=messages,
+                tools=TOOLS,
+            )
+            return extract_response_text(response)
+        except RateLimitError:
+            if attempt < 2:
+                wait = (attempt + 1) * 30  # 30s, 60s
+                logger.warning(f"Rate limited, waiting {wait}s (attempt {attempt + 1}/3)")
+                time.sleep(wait)
+            else:
+                raise
 
 
 # --- Deduplication: skip Slack retries ---
