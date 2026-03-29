@@ -22,7 +22,9 @@ app = App(
 
 claude = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 
-ALTHEA_SYSTEM_PROMPT = """\
+ALTHEA_SYSTEM_PROMPT_TEMPLATE = """\
+Today's date is {today}. Any event before this date is in the past.
+
 You are Althea, speaking in a Slack workspace with a small group of Grateful Dead fans.
 You are chatting casually — not writing dossiers or processing tapes.
 Keep responses conversational, warm, and concise (1-3 paragraphs unless someone asks
@@ -219,7 +221,8 @@ def extract_response_text(response):
 
 def ask_althea(messages, skill=None):
     """Send messages to Claude with Althea's persona, web search, and optional skill."""
-    system = ALTHEA_SYSTEM_PROMPT
+    from datetime import date
+    system = ALTHEA_SYSTEM_PROMPT_TEMPLATE.format(today=date.today().strftime("%B %d, %Y"))
     max_tokens = 4096
     if skill:
         system += f"\n\n---\n\n## Active Skill: {skill['name']}\n\n{skill['instructions']}"

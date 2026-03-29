@@ -12,8 +12,11 @@ max_tokens: 4096
 # Upcoming Shows
 
 This skill is about UPCOMING LIVE EVENTS happening in the real world in the
-next 30 days. NOT historical Grateful Dead shows. The user wants to know what
+next 90 days. NOT historical Grateful Dead shows. The user wants to know what
 Dead-related acts are playing near them soon.
+
+CRITICAL: Today's date is provided in the system prompt. Do NOT include any
+event with a date before today. If a search result shows a past date, skip it.
 
 ---
 
@@ -26,7 +29,8 @@ The user provides a city, state, region, or general area (e.g., "Bay Area",
 
 ### Step 2: Research
 
-Use `web_search` to find upcoming shows in the next 30 days. Search for:
+Use `web_search` to find upcoming shows in the next 90 days. Include the
+current month and year in your search queries to get current results. Search for:
 
 - "Grateful Dead tribute" / "Dead cover band" + [region] + "upcoming shows" + current year
 - "jam band" + [region] + "concert" + current month/year
@@ -42,8 +46,9 @@ Search at least 2-3 sources to get a reasonable picture.
 
 Before presenting results, apply these filters:
 
-- **Dates must be in the future.** Today's date is provided in your context.
-  Drop anything that has already happened.
+- **Dates must be in the future.** Today's date is in the system prompt.
+  Any event before today MUST be excluded. This is non-negotiable.
+  If all results are in the past, say you couldn't find upcoming shows.
 - **Location must be in or near the requested region.** "Near" means within
   reasonable driving distance (~1-2 hours). A show in Dallas is NOT near LA.
   If a notable tour is coming but not to the region, you can mention it in
