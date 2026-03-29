@@ -29,10 +29,11 @@ The user provides a song title. Confirm the song and proceed.
 
 ### Step 2: Research
 
-1. Search for the song on headyversion.com to find its page URL
+1. Use `web_search` to find the song's HeadyVersion page URL
    (typically `headyversion.com/song/[id]/grateful-dead/[song-name]/`)
-2. **Fetch the full HeadyVersion page** to read the actual ranked list,
-   vote counts, and user commentary — don't rely on search snippets alone
+2. Use `web_fetch` on that URL to read the full page — the actual ranked
+   list, vote counts, and user commentary. Search snippets are not enough;
+   you must fetch the page to get the real rankings.
 3. Verify all dates and venues against jerrybase.com
 
 **Source hierarchy:**
