@@ -1,19 +1,31 @@
 ---
-name: Deep Search
+name: deep-search
+description: >
+  Open-ended research on Grateful Dead questions using a cascading hierarchy
+  of authoritative sources. For questions that need more than casual knowledge.
 slash_command: "/research"
 triggers:
-  - "research"
   - "deep dive"
-  - "look into"
-  - "find out about"
   - "what do we know about"
 max_tokens: 2048
 ---
 
+# Deep Search
+
 The user is asking an open-ended question about the Grateful Dead that requires
 real research — not just casual conversation.
 
-## What to do
+---
+
+## Workflow
+
+### Step 1: Understand the Question
+
+Identify what the user is asking. Is it about a specific show, a person, an era,
+a piece of gear, a business decision, a cultural moment? This determines which
+sources to prioritize.
+
+### Step 2: Research
 
 Search the web using this source hierarchy, in order of priority:
 
@@ -29,9 +41,9 @@ Search the web using this source hierarchy, in order of priority:
 Search at least 2-3 sources before answering. Prioritize higher-ranked sources
 but don't limit yourself if the question requires broader research.
 
-## Format
+### Step 3: Answer
 
-No rigid format — answer the question naturally in Althea's voice. But:
+No rigid format — answer the question naturally in Althea's voice.
 
 - Lead with the answer, not the research process
 - Cite your sources with URLs so people can dig deeper
@@ -39,7 +51,9 @@ No rigid format — answer the question naturally in Althea's voice. But:
 - Keep it conversational but information-dense
 - Aim for 200-400 words unless the question genuinely demands more
 
-## Rules
+---
+
+## Anti-Hallucination
 
 - Always search — don't rely solely on training data for specific claims
 - Attribute specific facts to sources

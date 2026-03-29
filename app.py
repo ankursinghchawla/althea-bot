@@ -85,26 +85,31 @@ SKILLS_DIR = os.path.join(os.path.dirname(__file__), "skills")
 
 
 def load_skills():
-    """Load all skill .md files from the skills directory."""
+    """Load skills from skills/[skill-name]/SKILL.md directories."""
     skills = []
-    for path in sorted(glob.glob(os.path.join(SKILLS_DIR, "*.md"))):
-        filename = os.path.basename(path)
-        if filename.startswith("_"):  # skip example/template files
-            continue
-        with open(path) as f:
+    for skill_path in sorted(glob.glob(os.path.join(SKILLS_DIR, "*/SKILL.md"))):
+        skill_dir = os.path.dirname(skill_path)
+        with open(skill_path) as f:
             content = f.read()
         # Parse YAML frontmatter
-        if content.startswith("---"):
-            _, fm, body = content.split("---", 2)
-            meta = yaml.safe_load(fm)
-        else:
+        if not content.startswith("---"):
             continue
+        _, fm, body = content.split("---", 2)
+        meta = yaml.safe_load(fm)
+
+        # Load FORMAT.md if it exists
+        instructions = body.strip()
+        format_path = os.path.join(skill_dir, "FORMAT.md")
+        if os.path.exists(format_path):
+            with open(format_path) as f:
+                instructions += "\n\n---\n\n" + f.read().strip()
+
         skills.append({
-            "name": meta.get("name", filename),
+            "name": meta.get("name", os.path.basename(skill_dir)),
             "triggers": [t.lower() for t in meta.get("triggers", [])],
             "slash_command": meta.get("slash_command", "").lower(),
             "max_tokens": meta.get("max_tokens", 1024),
-            "instructions": body.strip(),
+            "instructions": instructions,
         })
     logger.info(f"Loaded {len(skills)} skill(s): {[s['name'] for s in skills]}")
     return skills
