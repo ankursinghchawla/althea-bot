@@ -4,6 +4,24 @@ A Slack bot powered by Claude that channels **Althea** — a Grateful Dead speci
 
 Built for a small friend-group Slack workspace. Hosted free on Render.
 
+## Commands
+
+- `/heady [song]` — Top community-ranked versions from HeadyVersion
+- `/song [title]` — Song dossier: origins, meaning, evolution
+- `/show [date]` — Show dossier: setlist, context, highlights
+- `/deep-dive [question]` — Sourced research across Dead archives
+- `/shows [region]` — Upcoming Dead-related shows near you
+- `/help` — List all commands
+
+Commands work anywhere in the message. Or just chat with her — she's a conversationalist too.
+
+## Architecture
+
+- **Python** — slack_bolt, Flask, anthropic SDK, gunicorn
+- **Claude Sonnet** with web search + web fetch tools
+- **Skills** — each lives in `skills/[name]/SKILL.md` with optional `FORMAT.md`
+- **Render free tier** — kept alive via UptimeRobot ping
+
 ## Setup
 
 ### 1. Create the Slack App
@@ -36,7 +54,7 @@ Built for a small friend-group Slack workspace. Hosted free on Render.
    - `SLACK_BOT_TOKEN` = your `xoxb-` token
    - `SLACK_SIGNING_SECRET` = your signing secret
    - `ANTHROPIC_API_KEY` = your Claude API key
-6. Deploy and note the URL (e.g. `https://althea-bot.onrender.com`)
+6. Deploy and note the URL
 
 ### 3. Connect Slack Events
 
@@ -48,17 +66,24 @@ Built for a small friend-group Slack workspace. Hosted free on Render.
    - `message.im`
 4. Save → Reinstall app if prompted
 
-### 4. Test
+### 4. Keep-Alive (recommended)
 
-1. Invite Althea to a channel: `/invite @Althea`
-2. Say: `@Althea what's your favorite Dark Star?`
-3. She should respond in 5-60 seconds (longer on first message if Render was asleep)
-
-### Optional: Keep-Alive
-
-Render's free tier sleeps after 15 min of inactivity. To prevent cold starts:
 1. Sign up at https://uptimerobot.com (free)
-2. Add HTTP monitor → `https://YOUR-RENDER-URL/health` → every 14 minutes
+2. Add HTTP monitor → `https://YOUR-RENDER-URL/health` → every 5 minutes
+
+## Adding Skills
+
+Create a new directory in `skills/` with a `SKILL.md`:
+
+```
+skills/my-new-skill/
+  SKILL.md      # frontmatter (name, slash_command, triggers, max_tokens) + instructions
+  FORMAT.md     # optional output template
+```
+
+The bot loads skills on startup. Redeploy to pick up changes.
+
+The `/help` skill output is hardcoded in `skills/help/SKILL.md` — update it manually when adding or changing skills.
 
 ## Environment Variables
 
@@ -68,12 +93,10 @@ Render's free tier sleeps after 15 min of inactivity. To prevent cold starts:
 | `SLACK_SIGNING_SECRET` | Slack App → Basic Information → Signing Secret |
 | `ANTHROPIC_API_KEY` | console.anthropic.com → API Keys |
 
-## Notes
-
-- The `/help` skill output is hardcoded in `skills/help/SKILL.md`. If you add, remove, or rename skills, update the help text manually.
-
 ## Cost
 
 - Render: $0 (free tier)
 - Claude API: <$1/month at casual usage
+- Web search + web fetch: $10 per 1,000 uses each (negligible at this scale)
 - Slack: included in your existing workspace
+- UptimeRobot: $0 (free tier)
