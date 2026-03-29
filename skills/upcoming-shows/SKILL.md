@@ -11,12 +11,13 @@ max_tokens: 4096
 
 # Upcoming Shows
 
-This skill is about UPCOMING LIVE EVENTS happening in the real world in the
-next 90 days. NOT historical Grateful Dead shows. The user wants to know what
-Dead-related acts are playing near them soon.
+This skill is about UPCOMING LIVE EVENTS happening in the real world.
+NOT historical Grateful Dead shows. The user wants to know what Dead-related
+acts are playing near them soon.
 
-CRITICAL: Today's date is provided in the system prompt. Do NOT include any
-event with a date before today. If a search result shows a past date, skip it.
+Date filtering is handled automatically by the system. Focus on finding
+shows and formatting output. The valid date range and search months are
+injected below — use them in your search queries.
 
 ---
 
@@ -24,37 +25,32 @@ event with a date before today. If a search result shows a past date, skip it.
 
 ### Step 1: Identify the Region
 
-The user provides a city, state, region, or general area (e.g., "Bay Area",
-"NYC", "Pacific Northwest", "near Austin", "LA"). If they don't specify, ask.
+The user provides a city, state, region, or general area. If they don't specify, ask.
 
 ### Step 2: Research
 
-Use `web_search` to find upcoming shows in the next 90 days. Include the
-current month and year in your search queries to get current results. Search for:
+Use `web_search` to find upcoming shows. Use the search months provided in
+the Date Boundaries section below — do NOT search for past months.
 
-- "Grateful Dead tribute" / "Dead cover band" + [region] + "upcoming shows" + current year
-- "jam band" + [region] + "concert" + current month/year
-- Specific well-known acts + [region] + "tour dates":
-  Dark Star Orchestra, Joe Russo's Almost Dead (JRAD), Grateful Shred,
-  Dead & Co, Melvin Seals & JGB, Billy Strings, Bob Weir, Mickey Hart,
-  Oteil Burbridge, Golden Gate Wingmen, Cubensis, Stella Blue's Band
-- Check jambase.com, songkick.com, bandsintown.com for aggregated listings
+Search queries should include the specific month and year, e.g.:
+- "Dead tribute band Los Angeles April 2026"
+- "jambase grateful dead Los Angeles upcoming 2026"
+- "Dark Star Orchestra tour dates 2026"
+- "jam band concerts Los Angeles May 2026"
 
-Search at least 2-3 sources to get a reasonable picture.
+Also try:
+- "site:jambase.com grateful dead [region] 2026"
+- "site:bandsintown.com [artist] [region]"
+
+Search at least 3-4 queries to get a reasonable picture.
 
 ### Step 3: Filter Results
 
-Before presenting results, apply these filters:
-
-- **Dates must be in the future.** Today's date is in the system prompt.
-  Any event before today MUST be excluded. This is non-negotiable.
-  If all results are in the past, say you couldn't find upcoming shows.
-- **Location must be in or near the requested region.** "Near" means within
-  reasonable driving distance (~1-2 hours). A show in Dallas is NOT near LA.
-  If a notable tour is coming but not to the region, you can mention it in
-  one line at the end ("_JRAD is touring but no LA dates in the next 30 days_").
+- **Location must be in or near the requested region** (~1-2 hours driving).
+  If a notable tour is coming but not to the region, mention it in one line
+  at the end.
 - **Verify dates are real.** If you're not confident a date is accurate,
-  omit it rather than list a wrong date.
+  omit it.
 
 ### Step 4: Present Results
 
