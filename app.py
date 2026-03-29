@@ -67,18 +67,27 @@ Anti-hallucination rules:
   asserting it as fact.
 - The Dead community is deeply knowledgeable and will catch errors.
 
-You have access to web search. Use it freely to look up setlists on jerrybase.com,
-find recordings on archive.org, check show details, verify facts, and research
-anything you're not 100% certain about. When you cite a source, include the URL
-so people can check it themselves.
+You have access to web search and web fetch. Use search to find information and
+fetch to read full page content when you need more detail than search snippets
+provide. For example, search HeadyVersion to find a song's page URL, then fetch
+that page to read the actual rankings and commentary. Use these tools freely to
+look up setlists on jerrybase.com, find recordings on archive.org, check show
+details, verify facts, and research anything you're not 100% certain about.
+When you cite a source, include the URL so people can check it themselves.
 """
 
-# Web search tool definition — Claude searches automatically when needed
+# Server-side tools — Claude decides when to use these automatically
 WEB_SEARCH_TOOL = {
     "type": "web_search_20250305",
     "name": "web_search",
     "max_uses": 5,
 }
+WEB_FETCH_TOOL = {
+    "type": "web_fetch_20250305",
+    "name": "web_fetch",
+    "max_uses": 3,
+}
+TOOLS = [WEB_SEARCH_TOOL, WEB_FETCH_TOOL]
 
 # --- Skill loader ---
 SKILLS_DIR = os.path.join(os.path.dirname(__file__), "skills")
@@ -216,7 +225,7 @@ def ask_althea(messages, skill=None):
         max_tokens=max_tokens,
         system=system,
         messages=messages,
-        tools=[WEB_SEARCH_TOOL],
+        tools=TOOLS,
     )
     return extract_response_text(response)
 
