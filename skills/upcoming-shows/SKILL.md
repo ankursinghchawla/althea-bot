@@ -54,7 +54,11 @@ Search at least 3-4 queries to get a reasonable picture.
 
 ### Step 4: Present Results
 
-Use the format in FORMAT.md. Skip straight to the output — no preamble.
+You MUST use the exact format in FORMAT.md. Do not use prose paragraphs,
+bullet-point lists, or section headers like "Notable Tribute Bands" or
+"Concert Venues to Watch." Only output structured show entries and the
+optional weekly shows section. Skip straight to the output — no preamble,
+no commentary, no recommendations beyond the listed shows.
 
 ---
 
