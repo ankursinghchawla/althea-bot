@@ -3,6 +3,7 @@ import re
 import glob
 import time
 import logging
+from datetime import date, timedelta
 
 import yaml
 from slack_bolt import App
@@ -219,13 +220,138 @@ def extract_response_text(response):
     return "".join(parts)
 
 
+def get_upcoming_shows_date_context():
+    """Compute concrete date boundaries and search months for upcoming-shows skill."""
+    today = date.today()
+    cutoff = today + timedelta(days=90)
+
+    # Build list of months to search (e.g., "April 2026", "May 2026", "June 2026")
+    search_months = []
+    d = today.replace(day=1)
+    while d <= cutoff:
+        search_months.append(d.strftime("%B %Y"))
+        # Move to next month
+        if d.month == 12:
+            d = d.replace(year=d.year + 1, month=1)
+        else:
+            d = d.replace(month=d.month + 1)
+
+    # Build list of past months this year to explicitly exclude
+    past_months = []
+    for m in range(1, today.month):
+        past_months.append(date(today.year, m, 1).strftime("%B %Y"))
+
+    return {
+        "today": today.strftime("%B %d, %Y"),
+        "earliest": (today + timedelta(days=1)).strftime("%B %d, %Y"),
+        "cutoff": cutoff.strftime("%B %d, %Y"),
+        "search_months": ", ".join(search_months),
+        "past_months": ", ".join(past_months) if past_months else "none",
+    }
+
+
+# Date patterns for post-processing filter
+_DATE_PATTERNS = [
+    # "March 28, 2026" or "March 28 2026"
+    re.compile(r"(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2}),?\s+(\d{4})", re.IGNORECASE),
+    # "3/28/2026" or "3/28/26"
+    re.compile(r"(\d{1,2})/(\d{1,2})/(\d{2,4})"),
+]
+
+_MONTH_MAP = {
+    "january": 1, "february": 2, "march": 3, "april": 4, "may": 5, "june": 6,
+    "july": 7, "august": 8, "september": 9, "october": 10, "november": 11, "december": 12,
+}
+
+
+def _parse_date_from_match(match):
+    """Try to extract a date object from a regex match."""
+    groups = match.groups()
+    try:
+        if groups[0].isdigit():
+            # Numeric format: M/D/Y
+            m, d, y = int(groups[0]), int(groups[1]), int(groups[2])
+            if y < 100:
+                y += 2000
+            return date(y, m, d)
+        else:
+            # Named month format: Month D, Y
+            m = _MONTH_MAP.get(groups[0].lower())
+            if m:
+                return date(int(groups[2]), m, int(groups[1]))
+    except (ValueError, KeyError):
+        pass
+    return None
+
+
+def filter_upcoming_shows_dates(text):
+    """Post-process upcoming-shows output to remove entries with dates outside the valid window."""
+    today = date.today()
+    cutoff = today + timedelta(days=90)
+
+    # Split into blocks separated by blank lines
+    blocks = re.split(r"\n\n+", text)
+    filtered = []
+
+    for block in blocks:
+        # Check if this block contains a date
+        found_date = None
+        for pattern in _DATE_PATTERNS:
+            match = pattern.search(block)
+            if match:
+                found_date = _parse_date_from_match(match)
+                break
+
+        if found_date:
+            # Only keep if date is in the valid window
+            if today < found_date <= cutoff:
+                filtered.append(block)
+            else:
+                logger.info(f"Filtered out show block with date {found_date} (outside {today} - {cutoff})")
+        else:
+            # No date found — keep it (headers, weekly shows section, etc.)
+            filtered.append(block)
+
+    result = "\n\n".join(filtered)
+
+    # If we filtered everything with dates, add a note
+    if not any(pattern.search(result) for pattern in _DATE_PATTERNS):
+        if any(pattern.search(text) for pattern in _DATE_PATTERNS):
+            # We had dates but filtered them all
+            result = "_I found some shows but they were all outside the next 90 days. Check jambase.com or bandsintown.com for the latest listings._"
+
+    return result
+
+
 def ask_althea(messages, skill=None):
     """Send messages to Claude with Althea's persona, web search, and optional skill."""
-    from datetime import date
-    system = ALTHEA_SYSTEM_PROMPT_TEMPLATE.format(today=date.today().strftime("%B %d, %Y"))
+    today = date.today()
+    system = ALTHEA_SYSTEM_PROMPT_TEMPLATE.format(today=today.strftime("%B %d, %Y"))
     max_tokens = 4096
+    is_upcoming_shows = False
+
     if skill:
-        system += f"\n\n---\n\n## Active Skill: {skill['name']}\n\n{skill['instructions']}"
+        instructions = skill["instructions"]
+
+        # For upcoming-shows, inject concrete date boundaries
+        if skill["name"] == "upcoming-shows":
+            is_upcoming_shows = True
+            ctx = get_upcoming_shows_date_context()
+            instructions += f"""
+
+---
+
+## Date Boundaries (computed automatically — do not override)
+
+- **Earliest valid date:** {ctx['earliest']}
+- **Latest valid date:** {ctx['cutoff']}
+- **Search months to use in queries:** {ctx['search_months']}
+- **Do NOT search for these months (they are in the past):** {ctx['past_months']}
+
+ONLY include events between {ctx['earliest']} and {ctx['cutoff']}.
+"""
+
+        system += f"\n\n---\n\n## Active Skill: {skill['name']}\n\n{instructions}"
         max_tokens = skill.get("max_tokens", 4096)
 
     # Retry up to 3 times on rate limit errors
@@ -238,7 +364,13 @@ def ask_althea(messages, skill=None):
                 messages=messages,
                 tools=TOOLS,
             )
-            return extract_response_text(response)
+            text = extract_response_text(response)
+
+            # Post-process upcoming-shows to enforce date filtering
+            if is_upcoming_shows:
+                text = filter_upcoming_shows_dates(text)
+
+            return text
         except RateLimitError:
             if attempt < 2:
                 wait = (attempt + 1) * 30  # 30s, 60s
