@@ -177,10 +177,10 @@ def handle_mention(event, client, say):
         response_text = ask_althea(messages)
         say(text=response_text, thread_ts=thread_ts)
 
-    except Exception:
+    except Exception as e:
         logger.exception("Error handling mention")
         say(
-            text="I got a little lost in the jam there — something went wrong. Try again?",
+            text=f"I got a little lost in the jam there — something went wrong. Try again?\n\n_Debug: {type(e).__name__}: {e}_",
             thread_ts=thread_ts,
         )
 
@@ -203,9 +203,9 @@ def handle_dm(event, client, say):
         response_text = ask_althea(messages)
         say(text=response_text)
 
-    except Exception:
+    except Exception as e:
         logger.exception("Error handling DM")
-        say(text="Something went sideways — try again in a moment?")
+        say(text=f"Something went sideways — try again in a moment?\n\n_Debug: {type(e).__name__}: {e}_")
 
 
 # --- Flask adapter for HTTP mode ---
