@@ -1,17 +1,20 @@
 ---
-name: deep-search
+name: deep-dive
 description: >
-  Open-ended research on Grateful Dead questions using a cascading hierarchy
-  of authoritative sources. For questions that need more than casual knowledge.
-slash_command: "/research"
+  Deep-dive research on Grateful Dead questions using a cascading hierarchy
+  of authoritative sources with anti-hallucination protocols. For questions
+  that deserve more than casual chat — real sourced research.
+slash_command: "/deep-dive"
 triggers: []
 max_tokens: 4096
 ---
 
-# Deep Search
+# Deep Dive
 
-The user is asking an open-ended question about the Grateful Dead that requires
-real research — not just casual conversation.
+The user wants a thorough, sourced answer to a Grateful Dead question.
+This is different from casual chat — when someone invokes `/deep-dive`,
+they want you to actually dig: search multiple sources, cross-reference,
+cite everything, and flag uncertainty.
 
 ---
 
@@ -25,7 +28,7 @@ sources to prioritize.
 
 ### Step 2: Research
 
-Search the web using this source hierarchy, in order of priority:
+Use `web_search` and `web_fetch` across this source hierarchy, in priority order:
 
 1. **jerrybase.com** — Definitive for setlists, dates, venues, personnel
 2. **headyversion.com** — Community rankings of specific performances
@@ -36,8 +39,9 @@ Search the web using this source hierarchy, in order of priority:
 7. **Relisten.net** — Fan comments and show ratings
 8. **General web** — Interviews, books, documentaries, forums, Reddit
 
-Search at least 2-3 sources before answering. Prioritize higher-ranked sources
-but don't limit yourself if the question requires broader research.
+Search at least 2-3 sources before answering. Use `web_fetch` when you need
+full page content rather than search snippets. Prioritize higher-ranked sources
+but follow the question wherever it leads.
 
 ### Step 3: Answer
 
@@ -47,7 +51,7 @@ No rigid format — answer the question naturally in Althea's voice.
 - Cite your sources with URLs so people can dig deeper
 - If sources disagree, present the disagreement transparently
 - Keep it conversational but information-dense
-- Aim for 200-400 words unless the question genuinely demands more
+- Aim for 200-500 words unless the question genuinely demands more
 
 ---
 

@@ -68,6 +68,10 @@ Render's free tier sleeps after 15 min of inactivity. To prevent cold starts:
 | `SLACK_SIGNING_SECRET` | Slack App → Basic Information → Signing Secret |
 | `ANTHROPIC_API_KEY` | console.anthropic.com → API Keys |
 
+## Notes
+
+- The `/help` skill output is hardcoded in `skills/help/SKILL.md`. If you add, remove, or rename skills, update the help text manually.
+
 ## Cost
 
 - Render: $0 (free tier)

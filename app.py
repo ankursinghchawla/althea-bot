@@ -128,20 +128,26 @@ SKILLS = load_skills()
 
 
 def match_skill(text):
-    """Check if a message matches any skill trigger or slash command. Returns (skill, cleaned_text) or (None, text)."""
+    """Check if a message matches any skill slash command (anywhere in the text).
+    Returns (skill, cleaned_text) or (None, text).
+
+    Supports flexible placement:
+      /heady Dark Star
+      tell me the top 3 dark stars /heady
+      /heady tell me the top 3 dark stars
+    """
     text_lower = text.lower().strip()
-    # Check slash commands first (e.g., "/heady Dark Star")
     for skill in SKILLS:
-        if skill["slash_command"] and text_lower.startswith(skill["slash_command"]):
-            cleaned = text[len(skill["slash_command"]):].strip()
-            logger.info(f"Skill matched via slash: {skill['name']}")
+        cmd = skill["slash_command"]
+        if not cmd:
+            continue
+        if cmd in text_lower:
+            # Remove the slash command from the text, wherever it appears
+            # Use case-insensitive replacement
+            import re as _re
+            cleaned = _re.sub(_re.escape(cmd), "", text, count=1, flags=_re.IGNORECASE).strip()
+            logger.info(f"Skill matched: {skill['name']} (command: {cmd})")
             return skill, cleaned or text
-    # Then check keyword triggers
-    for skill in SKILLS:
-        for trigger in skill["triggers"]:
-            if trigger in text_lower:
-                logger.info(f"Skill matched via keyword: {skill['name']} (trigger: {trigger})")
-                return skill, text
     return None, text
 
 
