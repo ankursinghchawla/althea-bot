@@ -217,7 +217,11 @@ def extract_response_text(response):
     for block in response.content:
         if block.type == "text":
             parts.append(block.text)
-    return "".join(parts)
+    text = "".join(parts)
+    # Strip citation tags that leak through from web search results
+    text = re.sub(r'<cite\s+index="[^"]*">', "", text)
+    text = re.sub(r"</cite>", "", text)
+    return text
 
 
 def get_upcoming_shows_date_context():
