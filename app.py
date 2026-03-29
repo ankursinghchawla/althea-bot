@@ -1,7 +1,9 @@
 import os
 import re
+import glob
 import logging
 
+import yaml
 from slack_bolt import App
 from slack_bolt.adapter.flask import SlackRequestHandler
 from flask import Flask, request
@@ -78,6 +80,49 @@ WEB_SEARCH_TOOL = {
     "max_uses": 5,
 }
 
+# --- Skill loader ---
+SKILLS_DIR = os.path.join(os.path.dirname(__file__), "skills")
+
+
+def load_skills():
+    """Load all skill .md files from the skills directory."""
+    skills = []
+    for path in sorted(glob.glob(os.path.join(SKILLS_DIR, "*.md"))):
+        filename = os.path.basename(path)
+        if filename.startswith("_"):  # skip example/template files
+            continue
+        with open(path) as f:
+            content = f.read()
+        # Parse YAML frontmatter
+        if content.startswith("---"):
+            _, fm, body = content.split("---", 2)
+            meta = yaml.safe_load(fm)
+        else:
+            continue
+        skills.append({
+            "name": meta.get("name", filename),
+            "triggers": [t.lower() for t in meta.get("triggers", [])],
+            "max_tokens": meta.get("max_tokens", 1024),
+            "instructions": body.strip(),
+        })
+    logger.info(f"Loaded {len(skills)} skill(s): {[s['name'] for s in skills]}")
+    return skills
+
+
+SKILLS = load_skills()
+
+
+def match_skill(text):
+    """Check if a message matches any skill trigger. Returns the skill or None."""
+    text_lower = text.lower()
+    for skill in SKILLS:
+        for trigger in skill["triggers"]:
+            if trigger in text_lower:
+                logger.info(f"Skill matched: {skill['name']} (trigger: {trigger})")
+                return skill
+    return None
+
+
 # Cache the bot's own user ID to identify its messages in threads
 BOT_USER_ID = None
 
@@ -145,12 +190,18 @@ def extract_response_text(response):
     return text
 
 
-def ask_althea(messages):
-    """Send messages to Claude with Althea's persona and web search."""
+def ask_althea(messages, skill=None):
+    """Send messages to Claude with Althea's persona, web search, and optional skill."""
+    system = ALTHEA_SYSTEM_PROMPT
+    max_tokens = 1024
+    if skill:
+        system += f"\n\n---\n\n## Active Skill: {skill['name']}\n\n{skill['instructions']}"
+        max_tokens = skill.get("max_tokens", 1024)
+
     response = claude.messages.create(
         model="claude-sonnet-4-20250514",
-        max_tokens=1024,
-        system=ALTHEA_SYSTEM_PROMPT,
+        max_tokens=max_tokens,
+        system=system,
         messages=messages,
         tools=[WEB_SEARCH_TOOL],
     )
@@ -165,16 +216,18 @@ def handle_mention(event, client, say):
     thread_ts = event.get("thread_ts", event["ts"])
 
     try:
+        text = strip_mention(event.get("text", ""))
+        skill = match_skill(text)
+
         if event.get("thread_ts"):
             messages = get_thread_messages(client, channel, thread_ts, bot_id)
         else:
-            text = strip_mention(event.get("text", ""))
             messages = [{"role": "user", "content": text}]
 
         if not messages:
             return
 
-        response_text = ask_althea(messages)
+        response_text = ask_althea(messages, skill=skill)
         say(text=response_text, thread_ts=thread_ts)
 
     except Exception as e:
@@ -199,8 +252,9 @@ def handle_dm(event, client, say):
         if not text:
             return
 
+        skill = match_skill(text)
         messages = [{"role": "user", "content": text}]
-        response_text = ask_althea(messages)
+        response_text = ask_althea(messages, skill=skill)
         say(text=response_text)
 
     except Exception as e:
