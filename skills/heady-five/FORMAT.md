@@ -1,30 +1,30 @@
-# Heady Five Format
+# Top Ranked Versions Format
 
 Keep it punchy. Each entry is 2-4 sentences max (not counting the commentary quote).
-Whole response should be under 400 words.
+Skip straight to the output — no preamble. Whole response should be under 500 words.
 
 ---
 
 ```
-*Heady Five: [Song Title]*
+*Top Ranked Versions: [Song Title]*
 
-*1. [Date] — [Venue], [City]*
+*1. [Date] — [Venue], [City]* · <[archive.org link]|Listen>
 [Why this version is special — 2-3 sentences]
 > "[Real user commentary or community consensus]"
 
-*2. [Date] — [Venue], [City]*
+*2. [Date] — [Venue], [City]* · <[archive.org link]|Listen>
 [Why this version is special — 2-3 sentences]
 > "[Real user commentary or community consensus]"
 
-*3. [Date] — [Venue], [City]*
+*3. [Date] — [Venue], [City]* · <[archive.org link]|Listen>
 [Why this version is special — 2-3 sentences]
 > "[Real user commentary or community consensus]"
 
-*4. [Date] — [Venue], [City]*
+*4. [Date] — [Venue], [City]* · <[archive.org link]|Listen>
 [Why this version is special — 2-3 sentences]
 > "[Real user commentary or community consensus]"
 
-*5. [Date] — [Venue], [City]*
+*5. [Date] — [Venue], [City]* · <[archive.org link]|Listen>
 [Why this version is special — 2-3 sentences]
 > "[Real user commentary or community consensus]"
 
