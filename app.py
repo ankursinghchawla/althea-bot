@@ -1,7 +1,9 @@
 import os
 import re
+import glob
 import logging
 
+import yaml
 from slack_bolt import App
 from slack_bolt.adapter.flask import SlackRequestHandler
 from flask import Flask, request
@@ -65,18 +67,89 @@ Anti-hallucination rules:
   asserting it as fact.
 - The Dead community is deeply knowledgeable and will catch errors.
 
-You have access to web search. Use it freely to look up setlists on jerrybase.com,
-find recordings on archive.org, check show details, verify facts, and research
-anything you're not 100% certain about. When you cite a source, include the URL
-so people can check it themselves.
+You have access to web search and web fetch. Use search to find information and
+fetch to read full page content when you need more detail than search snippets
+provide. For example, search HeadyVersion to find a song's page URL, then fetch
+that page to read the actual rankings and commentary. Use these tools freely to
+look up setlists on jerrybase.com, find recordings on archive.org, check show
+details, verify facts, and research anything you're not 100% certain about.
+When you cite a source, include the URL so people can check it themselves.
 """
 
-# Web search tool definition — Claude searches automatically when needed
+# Server-side tools — Claude decides when to use these automatically
 WEB_SEARCH_TOOL = {
     "type": "web_search_20250305",
     "name": "web_search",
     "max_uses": 5,
 }
+WEB_FETCH_TOOL = {
+    "type": "web_fetch_20250305",
+    "name": "web_fetch",
+    "max_uses": 3,
+}
+TOOLS = [WEB_SEARCH_TOOL, WEB_FETCH_TOOL]
+
+# --- Skill loader ---
+SKILLS_DIR = os.path.join(os.path.dirname(__file__), "skills")
+
+
+def load_skills():
+    """Load skills from skills/[skill-name]/SKILL.md directories."""
+    skills = []
+    for skill_path in sorted(glob.glob(os.path.join(SKILLS_DIR, "*/SKILL.md"))):
+        skill_dir = os.path.dirname(skill_path)
+        with open(skill_path) as f:
+            content = f.read()
+        # Parse YAML frontmatter
+        if not content.startswith("---"):
+            continue
+        _, fm, body = content.split("---", 2)
+        meta = yaml.safe_load(fm)
+
+        # Load FORMAT.md if it exists
+        instructions = body.strip()
+        format_path = os.path.join(skill_dir, "FORMAT.md")
+        if os.path.exists(format_path):
+            with open(format_path) as f:
+                instructions += "\n\n---\n\n" + f.read().strip()
+
+        skills.append({
+            "name": meta.get("name", os.path.basename(skill_dir)),
+            "triggers": [t.lower() for t in meta.get("triggers", [])],
+            "slash_command": meta.get("slash_command", "").lower(),
+            "max_tokens": meta.get("max_tokens", 1024),
+            "instructions": instructions,
+        })
+    logger.info(f"Loaded {len(skills)} skill(s): {[s['name'] for s in skills]}")
+    return skills
+
+
+SKILLS = load_skills()
+
+
+def match_skill(text):
+    """Check if a message matches any skill slash command (anywhere in the text).
+    Returns (skill, cleaned_text) or (None, text).
+
+    Supports flexible placement:
+      /heady Dark Star
+      tell me the top 3 dark stars /heady
+      /heady tell me the top 3 dark stars
+    """
+    text_lower = text.lower().strip()
+    for skill in SKILLS:
+        cmd = skill["slash_command"]
+        if not cmd:
+            continue
+        if cmd in text_lower:
+            # Remove the slash command from the text, wherever it appears
+            # Use case-insensitive replacement
+            import re as _re
+            cleaned = _re.sub(_re.escape(cmd), "", text, count=1, flags=_re.IGNORECASE).strip()
+            logger.info(f"Skill matched: {skill['name']} (command: {cmd})")
+            return skill, cleaned or text
+    return None, text
+
 
 # Cache the bot's own user ID to identify its messages in threads
 BOT_USER_ID = None
@@ -145,14 +218,20 @@ def extract_response_text(response):
     return text
 
 
-def ask_althea(messages):
-    """Send messages to Claude with Althea's persona and web search."""
+def ask_althea(messages, skill=None):
+    """Send messages to Claude with Althea's persona, web search, and optional skill."""
+    system = ALTHEA_SYSTEM_PROMPT
+    max_tokens = 4096
+    if skill:
+        system += f"\n\n---\n\n## Active Skill: {skill['name']}\n\n{skill['instructions']}"
+        max_tokens = skill.get("max_tokens", 4096)
+
     response = claude.messages.create(
         model="claude-sonnet-4-20250514",
-        max_tokens=1024,
-        system=ALTHEA_SYSTEM_PROMPT,
+        max_tokens=max_tokens,
+        system=system,
         messages=messages,
-        tools=[WEB_SEARCH_TOOL],
+        tools=TOOLS,
     )
     return extract_response_text(response)
 
@@ -165,16 +244,18 @@ def handle_mention(event, client, say):
     thread_ts = event.get("thread_ts", event["ts"])
 
     try:
+        text = strip_mention(event.get("text", ""))
+        skill, cleaned_text = match_skill(text)
+
         if event.get("thread_ts"):
             messages = get_thread_messages(client, channel, thread_ts, bot_id)
         else:
-            text = strip_mention(event.get("text", ""))
-            messages = [{"role": "user", "content": text}]
+            messages = [{"role": "user", "content": cleaned_text}]
 
         if not messages:
             return
 
-        response_text = ask_althea(messages)
+        response_text = ask_althea(messages, skill=skill)
         say(text=response_text, thread_ts=thread_ts)
 
     except Exception as e:
@@ -199,8 +280,9 @@ def handle_dm(event, client, say):
         if not text:
             return
 
-        messages = [{"role": "user", "content": text}]
-        response_text = ask_althea(messages)
+        skill, cleaned_text = match_skill(text)
+        messages = [{"role": "user", "content": cleaned_text}]
+        response_text = ask_althea(messages, skill=skill)
         say(text=response_text)
 
     except Exception as e:
