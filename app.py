@@ -64,7 +64,19 @@ Anti-hallucination rules:
 - If you're uncertain about a specific performance detail, flag it rather than
   asserting it as fact.
 - The Dead community is deeply knowledgeable and will catch errors.
+
+You have access to web search. Use it freely to look up setlists on jerrybase.com,
+find recordings on archive.org, check show details, verify facts, and research
+anything you're not 100% certain about. When you cite a source, include the URL
+so people can check it themselves.
 """
+
+# Web search tool definition — Claude searches automatically when needed
+WEB_SEARCH_TOOL = {
+    "type": "web_search_20250305",
+    "name": "web_search",
+    "max_uses": 5,
+}
 
 # Cache the bot's own user ID to identify its messages in threads
 BOT_USER_ID = None
@@ -113,15 +125,36 @@ def get_thread_messages(client, channel, thread_ts, bot_id):
     return merged
 
 
+def extract_response_text(response):
+    """Extract text from Claude response, handling web search result blocks."""
+    parts = []
+    sources = []
+    for block in response.content:
+        if block.type == "text":
+            parts.append(block.text)
+            # Collect cited URLs from citations
+            if hasattr(block, "citations") and block.citations:
+                for cite in block.citations:
+                    if hasattr(cite, "url") and cite.url:
+                        entry = f"<{cite.url}|{cite.title}>" if hasattr(cite, "title") and cite.title else cite.url
+                        if entry not in sources:
+                            sources.append(entry)
+    text = "".join(parts)
+    if sources:
+        text += "\n\n_Sources: " + " | ".join(sources) + "_"
+    return text
+
+
 def ask_althea(messages):
-    """Send messages to Claude with Althea's persona."""
+    """Send messages to Claude with Althea's persona and web search."""
     response = claude.messages.create(
         model="claude-sonnet-4-20250514",
         max_tokens=1024,
         system=ALTHEA_SYSTEM_PROMPT,
         messages=messages,
+        tools=[WEB_SEARCH_TOOL],
     )
-    return response.content[0].text
+    return extract_response_text(response)
 
 
 @app.event("app_mention")
