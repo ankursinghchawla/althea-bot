@@ -102,6 +102,7 @@ def load_skills():
         skills.append({
             "name": meta.get("name", filename),
             "triggers": [t.lower() for t in meta.get("triggers", [])],
+            "slash_command": meta.get("slash_command", "").lower(),
             "max_tokens": meta.get("max_tokens", 1024),
             "instructions": body.strip(),
         })
@@ -113,14 +114,21 @@ SKILLS = load_skills()
 
 
 def match_skill(text):
-    """Check if a message matches any skill trigger. Returns the skill or None."""
-    text_lower = text.lower()
+    """Check if a message matches any skill trigger or slash command. Returns (skill, cleaned_text) or (None, text)."""
+    text_lower = text.lower().strip()
+    # Check slash commands first (e.g., "/heady Dark Star")
+    for skill in SKILLS:
+        if skill["slash_command"] and text_lower.startswith(skill["slash_command"]):
+            cleaned = text[len(skill["slash_command"]):].strip()
+            logger.info(f"Skill matched via slash: {skill['name']}")
+            return skill, cleaned or text
+    # Then check keyword triggers
     for skill in SKILLS:
         for trigger in skill["triggers"]:
             if trigger in text_lower:
-                logger.info(f"Skill matched: {skill['name']} (trigger: {trigger})")
-                return skill
-    return None
+                logger.info(f"Skill matched via keyword: {skill['name']} (trigger: {trigger})")
+                return skill, text
+    return None, text
 
 
 # Cache the bot's own user ID to identify its messages in threads
@@ -217,12 +225,12 @@ def handle_mention(event, client, say):
 
     try:
         text = strip_mention(event.get("text", ""))
-        skill = match_skill(text)
+        skill, cleaned_text = match_skill(text)
 
         if event.get("thread_ts"):
             messages = get_thread_messages(client, channel, thread_ts, bot_id)
         else:
-            messages = [{"role": "user", "content": text}]
+            messages = [{"role": "user", "content": cleaned_text}]
 
         if not messages:
             return
@@ -252,8 +260,8 @@ def handle_dm(event, client, say):
         if not text:
             return
 
-        skill = match_skill(text)
-        messages = [{"role": "user", "content": text}]
+        skill, cleaned_text = match_skill(text)
+        messages = [{"role": "user", "content": cleaned_text}]
         response_text = ask_althea(messages, skill=skill)
         say(text=response_text)
 
