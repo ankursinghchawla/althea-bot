@@ -29,11 +29,14 @@ The user provides a song title. Confirm the song and proceed.
 
 ### Step 2: Research
 
-Search headyversion.com for the song to find the community's top-ranked versions.
-Verify all dates and venues against jerrybase.com.
+1. Search for the song on headyversion.com to find its page URL
+   (typically `headyversion.com/song/[id]/grateful-dead/[song-name]/`)
+2. **Fetch the full HeadyVersion page** to read the actual ranked list,
+   vote counts, and user commentary — don't rely on search snippets alone
+3. Verify all dates and venues against jerrybase.com
 
 **Source hierarchy:**
-1. **headyversion.com** — Primary for rankings and voter commentary
+1. **headyversion.com** (fetched page) — Primary for rankings and voter commentary
 2. **jerrybase.com** — Verify dates, venues, and personnel
 3. **archive.org** — Listener reviews for additional color
 
