@@ -74,6 +74,13 @@ that page to read the actual rankings and commentary. Use these tools freely to
 look up setlists on jerrybase.com, find recordings on archive.org, check show
 details, verify facts, and research anything you're not 100% certain about.
 When you cite a source, include the URL so people can check it themselves.
+
+IMPORTANT: Never narrate your research process. Do not say things like "Let me
+search for..." or "Based on my research..." — just deliver the answer directly.
+
+If a request is ambiguous or you need clarification, ask. For example, if someone
+says "/show 3/15" without a year, ask which year. If "/heady Fire" could be
+"Fire on the Mountain" or "Estimated Prophet > Fire," ask which song. Don't guess.
 """
 
 # Server-side tools — Claude decides when to use these automatically
@@ -201,21 +208,10 @@ def get_thread_messages(client, channel, thread_ts, bot_id):
 def extract_response_text(response):
     """Extract text from Claude response, handling web search result blocks."""
     parts = []
-    sources = []
     for block in response.content:
         if block.type == "text":
             parts.append(block.text)
-            # Collect cited URLs from citations
-            if hasattr(block, "citations") and block.citations:
-                for cite in block.citations:
-                    if hasattr(cite, "url") and cite.url:
-                        entry = f"<{cite.url}|{cite.title}>" if hasattr(cite, "title") and cite.title else cite.url
-                        if entry not in sources:
-                            sources.append(entry)
-    text = "".join(parts)
-    if sources:
-        text += "\n\n_Sources: " + " | ".join(sources) + "_"
-    return text
+    return "".join(parts)
 
 
 def ask_althea(messages, skill=None):
@@ -236,9 +232,31 @@ def ask_althea(messages, skill=None):
     return extract_response_text(response)
 
 
+# --- Deduplication: skip Slack retries ---
+_seen_events = set()
+_seen_events_max = 1000
+
+
+def is_duplicate(event):
+    """Return True if we've already processed this event (Slack retry)."""
+    event_id = event.get("client_msg_id") or event.get("ts")
+    if not event_id:
+        return False
+    if event_id in _seen_events:
+        logger.info(f"Skipping duplicate event: {event_id}")
+        return True
+    _seen_events.add(event_id)
+    # Prevent unbounded growth
+    if len(_seen_events) > _seen_events_max:
+        _seen_events.clear()
+    return False
+
+
 @app.event("app_mention")
 def handle_mention(event, client, say):
     """Respond when someone @mentions Althea in a channel."""
+    if is_duplicate(event):
+        return
     bot_id = get_bot_user_id(client)
     channel = event["channel"]
     thread_ts = event.get("thread_ts", event["ts"])
@@ -273,6 +291,8 @@ def handle_dm(event, client, say):
     if event.get("channel_type") != "im":
         return
     if event.get("bot_id") or event.get("subtype"):
+        return
+    if is_duplicate(event):
         return
 
     try:
