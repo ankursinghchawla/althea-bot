@@ -370,7 +370,7 @@ ONLY include events between {ctx['earliest']} and {ctx['cutoff']}.
     for attempt in range(3):
         try:
             response = claude.messages.create(
-                model="claude-sonnet-4-20250514",
+                model="claude-sonnet-5",
                 max_tokens=max_tokens,
                 system=system,
                 messages=messages,
